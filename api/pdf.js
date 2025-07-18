@@ -1,57 +1,57 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const puppeteer = require('puppeteer');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+export default async function handler(req, res) {
+  const {
+    nombre,
+    direccion,
+    comuna,
+    telefono,
+    correo,
+    equipo,
+    marca,
+    tipo,
+    descripcion,
+    fecha,
+    abono,
+    saldo,
+    total,
+    acepta,
+    rut,
+    rutcliente,
+    tecnico,
+  } = req.query;
 
-app.get('/', async (req, res) => {
-  try {
-    // Cargar plantilla HTML
-    const templatePath = path.join(__dirname, 'plantilla.html');
-    let html = fs.readFileSync(templatePath, 'utf8');
+  const templatePath = path.join(process.cwd(), 'plantilla.html');
+  let html = fs.readFileSync(templatePath, 'utf8');
 
-    // Reemplazar variables del HTML con datos desde query string
-    html = html.replace('{{nombre}}', req.query.nombre || '');
-    html = html.replace('{{direccion}}', req.query.direccion || '');
-    html = html.replace('{{comuna}}', req.query.comuna || '');
-    html = html.replace('{{telefono}}', req.query.telefono || '');
-    html = html.replace('{{marca}}', req.query.marca || '');
-    html = html.replace('{{tipo}}', req.query.tipo || '');
-    html = html.replace('{{descripcion}}', req.query.descripcion || '');
-    html = html.replace('{{fecha}}', req.query.fecha || '');
-    html = html.replace('{{presupuesto}}', req.query.presupuesto || '');
-    html = html.replace('{{abono}}', req.query.abono || '');
-    html = html.replace('{{saldo}}', req.query.saldo || '');
-    html = html.replace('{{numero}}', req.query.numero || '');
-    html = html.replace('{{visita}}', req.query.visita === 'true' ? 'X' : '');
-    html = html.replace('{{acepta}}', req.query.acepta === 'true' ? 'X' : '');
+  html = html.replace('{{nombre}}', nombre || '');
+  html = html.replace('{{direccion}}', direccion || '');
+  html = html.replace('{{comuna}}', comuna || '');
+  html = html.replace('{{telefono}}', telefono || '');
+  html = html.replace('{{correo}}', correo || '');
+  html = html.replace('{{equipo}}', equipo || '');
+  html = html.replace('{{marca}}', marca || '');
+  html = html.replace('{{tipo}}', tipo || '');
+  html = html.replace('{{descripcion}}', descripcion || '');
+  html = html.replace('{{fecha}}', fecha || '');
+  html = html.replace('{{abono}}', abono || '');
+  html = html.replace('{{saldo}}', saldo || '');
+  html = html.replace('{{total}}', total || '');
+  html = html.replace('{{acepta}}', acepta || '');
+  html = html.replace('{{rut}}', rut || '');
+  html = html.replace('{{rutcliente}}', rutcliente || '');
+  html = html.replace('{{tecnico}}', tecnico || '');
 
-    // Generar PDF con Puppeteer
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+  const browser = await puppeteer.launch({ headless: 'new' });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0' });
 
-    const pdfBuffer = await page.pdf({ format: 'A4' });
-    await browser.close();
+  const pdfBuffer = await page.pdf({ format: 'A4' });
+  await browser.close();
 
-    // Devolver el PDF
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'inline; filename=factura.pdf',
-    });
-
-    res.send(pdfBuffer);
-  } catch (error) {
-    console.error('Error al generar PDF:', error);
-    res.status(500).send('Error al generar PDF');
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(Servidor activo en http://localhost:${PORT});
-});
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=factura.pdf');
+  res.send(pdfBuffer);
+}
