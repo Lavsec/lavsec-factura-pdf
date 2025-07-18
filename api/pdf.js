@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   } = req.query;
 
   try {
-    const templatePath = path.join(process.cwd(), 'plantilla.html');
+    const templatePath = path.join(process.cwd(), 'template.html');
     let html = fs.readFileSync(templatePath, 'utf8');
 
     const replacements = {
