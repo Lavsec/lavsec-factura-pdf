@@ -1,57 +1,47 @@
-import puppeteer from 'puppeteer';
+// /api/pdf.js (dentro de carpeta /api si estás en Vercel)
+import chromium from 'chrome-aws-lambda';
 import fs from 'fs';
 import path from 'path';
 
 export default async function handler(req, res) {
   const {
-    nombre,
-    direccion,
-    comuna,
-    telefono,
-    correo,
-    equipo,
-    marca,
-    tipo,
-    descripcion,
-    fecha,
-    abono,
-    saldo,
-    total,
-    acepta,
-    rut,
-    rutcliente,
-    tecnico,
+    nombre = '', direccion = '', comuna = '', telefono = '', correo = '',
+    equipo = '', marca = '', tipo = '', descripcion = '', fecha = '',
+    abono = '', saldo = '', total = '', acepta = '', rut = '', rutcliente = '', tecnico = ''
   } = req.query;
 
-  const templatePath = path.join(process.cwd(), 'plantilla.html');
-  let html = fs.readFileSync(templatePath, 'utf8');
+  try {
+    const templatePath = path.join(process.cwd(), 'plantilla.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
 
-  html = html.replace('{{nombre}}', nombre || '');
-  html = html.replace('{{direccion}}', direccion || '');
-  html = html.replace('{{comuna}}', comuna || '');
-  html = html.replace('{{telefono}}', telefono || '');
-  html = html.replace('{{correo}}', correo || '');
-  html = html.replace('{{equipo}}', equipo || '');
-  html = html.replace('{{marca}}', marca || '');
-  html = html.replace('{{tipo}}', tipo || '');
-  html = html.replace('{{descripcion}}', descripcion || '');
-  html = html.replace('{{fecha}}', fecha || '');
-  html = html.replace('{{abono}}', abono || '');
-  html = html.replace('{{saldo}}', saldo || '');
-  html = html.replace('{{total}}', total || '');
-  html = html.replace('{{acepta}}', acepta || '');
-  html = html.replace('{{rut}}', rut || '');
-  html = html.replace('{{rutcliente}}', rutcliente || '');
-  html = html.replace('{{tecnico}}', tecnico || '');
+    const replacements = {
+      nombre, direccion, comuna, telefono, correo, equipo,
+      marca, tipo, descripcion, fecha, abono, saldo, total,
+      acepta, rut, rutcliente, tecnico
+    };
 
-  const browser = await puppeteer.launch({ headless: 'new' });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+    for (const [key, value] of Object.entries(replacements)) {
+      html = html.replace(`{{${key}}}`, value);
+    }
 
-  const pdfBuffer = await page.pdf({ format: 'A4' });
-  await browser.close();
+    const browser = await chromium.puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
+    });
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename=factura.pdf');
-  res.send(pdfBuffer);
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({ format: 'A4' });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename=factura.pdf');
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error al generar el PDF:', error);
+    res.status(500).send('Error al generar el PDF');
+  }
 }
