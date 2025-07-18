@@ -1,27 +1,33 @@
-// /api/pdf.js (dentro de carpeta /api si estás en Vercel)
+// /api/pdf.js
 import chromium from 'chrome-aws-lambda';
 import fs from 'fs';
 import path from 'path';
 
 export default async function handler(req, res) {
   const {
-    nombre = '', direccion = '', comuna = '', telefono = '', correo = '',
-    equipo = '', marca = '', tipo = '', descripcion = '', fecha = '',
-    abono = '', saldo = '', total = '', acepta = '', rut = '', rutcliente = '', tecnico = ''
+    nombreCliente = '', correo = '', direccion = '', telefono = '',
+    tipoEquipo = '', comuna = '', marca = '',
+    detalleTrabajo = '', resumenGastos = '',
+    abono = '', saldo = '', total = '',
+    marcarVisita = '', marcarAcepta = '',
+    numeroFactura = '', dia = '', mes = '', anio = ''
   } = req.query;
 
   try {
-  const templatePath = path.join(process.cwd(), 'api', 'template.html'); // ✅
+    const templatePath = path.join(process.cwd(), 'api', 'template.html');
     let html = fs.readFileSync(templatePath, 'utf8');
 
     const replacements = {
-      nombre, direccion, comuna, telefono, correo, equipo,
-      marca, tipo, descripcion, fecha, abono, saldo, total,
-      acepta, rut, rutcliente, tecnico
+      nombreCliente, correo, direccion, telefono,
+      tipoEquipo, comuna, marca,
+      detalleTrabajo, resumenGastos,
+      abono, saldo, total,
+      marcarVisita, marcarAcepta,
+      numeroFactura, dia, mes, anio
     };
 
     for (const [key, value] of Object.entries(replacements)) {
-      html = html.replace(`{{${key}}}`, value);
+      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
     }
 
     const browser = await chromium.puppeteer.launch({
